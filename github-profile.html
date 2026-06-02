@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RETHEX · GitHub</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0e;
+    --bg2: #080f14;
+    --bg3: #0c1822;
+    --panel: #0d1f2d;
+    --border: #1a3a4a;
+    --border-glow: #00ffa355;
+    --accent: #00ffa3;
+    --accent2: #00cfff;
+    --accent3: #ff6b35;
+    --text: #c8e6f0;
+    --muted: #4a7a8a;
+    --muted2: #2a4a5a;
+    --tag-bg: #0a2030;
+    --cpp: #f34b7d;
+    --python: #3572a5;
+    --go: #00add8;
+    --rust: #dea584;
+    --html: #e34c26;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,255,163,0.015) 2px,
+      rgba(0,255,163,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Grid background */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,163,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,163,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(5,10,14,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 56px;
+  }
+
+  .topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 0 20px var(--accent);
+  }
+
+  .topbar-logo svg { width: 22px; height: 22px; }
+
+  .topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .topbar-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .topbar-nav a:hover {
+    color: var(--accent);
+    border-color: var(--border-glow);
+    background: var(--tag-bg);
+  }
+
+  .topbar-search {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 12px;
+    width: 220px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .topbar-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,255,163,0.08);
+    color: var(--text);
+  }
+  .topbar-search::placeholder { color: var(--muted2); }
+
+  .btn-signin {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-signin:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-signup {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-signup:hover { background: #00e090; box-shadow: 0 0 16px rgba(0,255,163,0.4); }
+
+  /* LAYOUT */
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  /* SIDEBAR */
+  .sidebar { position: sticky; top: 80px; }
+
+  .avatar-wrap {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin-bottom: 20px;
+  }
+
+  .avatar-frame {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 30px rgba(0,255,163,0.25), inset 0 0 30px rgba(0,255,163,0.05);
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 20px rgba(0,255,163,0.2), inset 0 0 20px rgba(0,255,163,0.03); }
+    50% { box-shadow: 0 0 40px rgba(0,255,163,0.4), inset 0 0 40px rgba(0,255,163,0.08); }
+  }
+
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    object-fit: cover;
+    display: block;
+    filter: saturate(0.8) contrast(1.1);
+  }
+
+  .avatar-corner {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--accent2);
+    border-style: solid;
+    border-width: 0;
+  }
+  .avatar-corner.tl { top: -4px; left: -4px; border-top-width: 2px; border-left-width: 2px; border-radius: 3px 0 0 0; }
+  .avatar-corner.tr { top: -4px; right: -4px; border-top-width: 2px; border-right-width: 2px; border-radius: 0 3px 0 0; }
+  .avatar-corner.bl { bottom: -4px; left: -4px; border-bottom-width: 2px; border-left-width: 2px; border-radius: 0 0 0 3px; }
+  .avatar-corner.br { bottom: -4px; right: -4px; border-bottom-width: 2px; border-right-width: 2px; border-radius: 0 0 3px 0; }
+
+  .org-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .org-handle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .org-bio {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .meta-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .meta-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .meta-list li a { color: var(--accent2); text-decoration: none; }
+  .meta-list li a:hover { text-decoration: underline; }
+  .meta-list .icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .followers-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .followers-badge strong { color: var(--text); }
+
+  .btn-follow {
+    width: 100%;
+    padding: 9px;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .btn-follow:hover {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 0 20px rgba(0,255,163,0.3);
+  }
+
+  /* ORG TABS */
+  .org-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+    overflow-x: auto;
+  }
+  .org-tab {
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .org-tab:hover { color: var(--text); }
+  .org-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .org-tab .count {
+    background: var(--muted2);
+    color: var(--text);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+
+  /* README SECTION */
+  .readme-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    animation: fadeUp 0.4s ease both;
+  }
+  .readme-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--bg3);
+  }
+  .readme-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .readme-header .dot-r { background: #ff5f57; }
+  .readme-header .dot-y { background: #febc2e; }
+  .readme-header .dot-g { background: #28c840; }
+  .readme-header span { margin-left: 4px; }
+  .readme-body { padding: 24px 28px; }
+
+  .readme-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .readme-tagline {
+    font-size: 14px;
+    color: var(--accent2);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .badge-green { color: var(--accent); border-color: var(--accent); background: rgba(0,255,163,0.08); }
+  .badge-blue { color: var(--accent2); border-color: var(--accent2); background: rgba(0,207,255,0.08); }
+  .badge-dark { color: var(--text); border-color: var(--border); background: var(--bg3); }
+  .badge:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+  .terminal-quote {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    color: var(--accent);
+    position: relative;
+  }
+  .terminal-quote::before {
+    content: '> ';
+    color: var(--muted);
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '##';
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .about-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+  .about-text strong { color: var(--accent2); }
+  .about-text a { color: var(--accent); text-decoration: none; }
+
+  /* REPO TABLE */
+  .repo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 24px;
+  }
+  .repo-table th {
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+  }
+  .repo-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(26,58,74,0.5);
+    vertical-align: middle;
+  }
+  .repo-table tr:hover td { background: rgba(0,255,163,0.03); }
+  .repo-table a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .repo-table a:hover { color: var(--accent); text-decoration: underline; }
+  .repo-table .desc { color: var(--muted); font-size: 11px; }
+
+  /* REPOS GRID */
+  .repos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .repo-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.25s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    animation: fadeUp 0.4s ease both;
+  }
+  .repo-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0,255,163,0.1);
+    transform: translateY(-2px);
+  }
+  .repo-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .repo-icon { font-size: 16px; }
+  .repo-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+  .repo-card-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .repo-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .lang-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+  }
+  .star-count, .fork-count {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .lang-cpp { background: var(--cpp); }
+  .lang-python { background: var(--python); }
+  .lang-go { background: var(--go); }
+  .lang-rust { background: var(--rust); }
+  .lang-html { background: var(--html); }
+
+  /* POPULAR REPOS SECTION */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .see-all {
+    font-size: 11px;
+    color: var(--accent2);
+    text-decoration: none;
+  }
+  .see-all:hover { text-decoration: underline; }
+
+  /* REPO LIST */
+  .repo-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .repo-list-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .repo-list-item:hover {
+    border-color: rgba(0,255,163,0.3);
+    background: var(--bg3);
+  }
+  .repo-list-main { flex: 1; }
+  .repo-list-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .repo-list-name a {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+    text-decoration: none;
+  }
+  .repo-list-name a:hover { color: var(--accent); }
+  .public-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .repo-list-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .repo-list-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    align-items: center;
+  }
+  .updated-at { margin-left: auto; font-size: 11px; color: var(--muted2); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* FLASH cursor blink */
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted2); }
+
+  @media (max-width: 768px) {
+    .page { grid-template-columns: 1fr; }
+    .repos-grid { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+    GitTerm
+  </div>
+  <nav class="topbar-nav">
+    <a href="#">Product</a>
+    <a href="#">Solutions</a>
+    <a href="#">Open Source</a>
+    <a href="#">Pricing</a>
+  </nav>
+  <input class="topbar-search" type="text" placeholder="/ Search or jump to...">
+  <button class="btn-signin">Sign in</button>
+  <button class="btn-signup">Sign up</button>
+</header>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="avatar-wrap">
+      <img class="avatar-img" src="https://raw.githubusercontent.com/RethexDev/rethex-site/main/e272a9f9-7b11-4a53-b6ad-98db4c0ed28d.png" alt="RETHEX">
+      <div class="avatar-frame"></div>
+      <div class="avatar-corner tl"></div>
+      <div class="avatar-corner tr"></div>
+      <div class="avatar-corner bl"></div>
+      <div class="avatar-corner br"></div>
+    </div>
+
+    <h1 class="org-name">RETHEX<span class="cursor"></span></h1>
+    <p class="org-handle">@rethex</p>
+
+    <div class="org-bio">
+      The official RETHEX coin &amp; Reticulum ecosystem — firmware, software, community.
+    </div>
+
+    <button class="btn-follow">+ Follow</button>
+
+    <div class="followers-badge">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="color:var(--muted)"><path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0-.001 3.999A2 2 0 0 0 5.5 3.5Z"/></svg>
+      <strong>14</strong> followers
+    </div>
+
+    <ul class="meta-list">
+      
+      
+      <li>
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z"/></svg>
+        <a href="https://x.com/RethexDev" target="_blank">@RethexDev</a>
+      </li>
+      <li>
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25v-8.5C0 2.784.784 2 1.75 2ZM1.5 12.251c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V5.809L8.38 9.397a.75.75 0 0 1-.76 0L1.5 5.809v6.442Zm13-8.181v-.32a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25v.32L8 7.88Z"/></svg>
+        <a href="mailto:noreply@rethex.io">noreply@rethex.io</a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- TABS -->
+    <nav class="org-tabs">
+      <a class="org-tab active" href="#">Overview</a>
+      <a class="org-tab" href="#">Repositories <span class="count">8</span></a>
+      <a class="org-tab" href="#">Projects</a>
+      <a class="org-tab" href="#">Packages</a>
+      <a class="org-tab" href="#">People</a>
+    </nav>
+
+    <!-- README BOX -->
+    <div class="readme-box">
+      <div class="readme-header">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span>README.md</span>
+      </div>
+      <div class="readme-body">
+        <h2 class="readme-title">RETHEX</h2>
+        <p class="readme-tagline">// New Networks. New Currency.</p>
+
+        <div class="badge-row">
+          <a href="https://rethex.io" class="badge badge-green">
+            <span>◉</span> WEBSITE
+          </a>
+          <a href="#" class="badge badge-blue">
+            <span>◎</span> ABOUT
+          </a>
+          <a href="#" class="badge badge-dark">
+            <span>★</span> FOLLOW · 14
+          </a>
+          <a href="#" class="badge badge-dark">
+            <span>✕</span> @RethexDev
+          </a>
+        </div>
+
+        <div class="terminal-quote">
+          "Privacy is a fundamental human right."
+        </div>
+
+        <hr class="divider">
+
+        <h3 class="section-title">About Us</h3>
+        <p class="about-text">
+          Our mission is to support the entire <strong><a href="#">Reticulum</a></strong> ecosystem.<br><br>
+          Software support, hardware availability, knowledge accessibility, and community building are our core pillars. We have a vision for Reticulum that many won't understand, and that's okay — we're still going to build it.
+        </p>
+
+        <h3 class="section-title">Hardware Firmware</h3>
+        <table class="repo-table" style="margin-bottom: 24px;">
+          <thead>
+            <tr>
+              <th>Repo</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="#">retcom</a></td>
+              <td class="desc">Reticulum on the M5Stack Cardputer</td>
+            </tr>
+            <tr>
+              <td><a href="#">rethex</a></td>
+              <td class="desc">Reticulum on the LilyGo T-Deck</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="section-title">Software & Libraries</h3>
+        <table class="repo-table">
+          <thead>
+            <tr>
+              <th>Repo</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="#">lrgp-py</a></td>
+              <td class="desc">Multiplayer games over LXMF (Python)</td>
+            </tr>
+            <tr>
+              <td><a href="#">lrgp-rs</a></td>
+              <td class="desc">Multiplayer games over LXMF (Rust)</td>
+            </tr>
+            <tr>
+              <td><a href="#">revanity-go</a></td>
+              <td class="desc">Reticulum/LXMF vanity address generator</td>
+            </tr>
+            <tr>
+              <td><a href="#">rethex-site</a></td>
+              <td class="desc">RETHEX's frontend website + docs</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:12px; color: var(--muted); font-style: italic;">
+          — Built with love and intent.<span class="cursor"></span>
+        </p>
+      </div>
+    </div>
+
+    <!-- POPULAR REPOS -->
+    <div class="section-header">
+      <span class="section-title" style="margin:0">Popular repositories</span>
+      <a href="#" class="see-all">View all →</a>
+    </div>
+
+    <div class="repos-grid" style="margin-bottom: 32px;">
+      <a class="repo-card" href="#" style="animation-delay:0.05s">
+        <div class="repo-card-header">
+          <span class="repo-icon">📦</span>
+          <div>
+            <div class="repo-card-name">rethex</div>
+          </div>
+          <span class="public-tag" style="margin-left:auto">Public</span>
+        </div>
+        <div class="repo-card-desc">Standalone Reticulum on LilyGo T-Deck, all-in-one.</div>
+        <div class="repo-card-meta">
+          <span><span class="lang-dot lang-cpp"></span>C++</span>
+          <span class="star-count">★ 33</span>
+          <span class="fork-count">⑂ 4</span>
+        </div>
+      </a>
+      <a class="repo-card" href="#" style="animation-delay:0.1s">
+        <div class="repo-card-header">
+          <span class="repo-icon">📦</span>
+          <div>
+            <div class="repo-card-name">retcom</div>
+          </div>
+          <span class="public-tag" style="margin-left:auto">Public</span>
+        </div>
+        <div class="repo-card-desc">Standalone Reticulum on M5Stack's Cardputer Adv.</div>
+        <div class="repo-card-meta">
+          <span><span class="lang-dot lang-cpp"></span>C++</span>
+          <span class="star-count">★ 9</span>
+        </div>
+      </a>
+      <a class="repo-card" href="#" style="animation-delay:0.15s">
+        <div class="repo-card-header">
+          <span class="repo-icon">📦</span>
+          <div>
+            <div class="repo-card-name">lrgp-py</div>
+          </div>
+          <span class="public-tag" style="margin-left:auto">Public</span>
+        </div>
+        <div class="repo-card-desc">Lightweight Reticulum Gaming Protocol — multiplayer games over LXMF/Reticulum mesh networks (Python)</div>
+        <div class="repo-card-meta">
+          <span><span class="lang-dot lang-python"></span>Python</span>
+          <span class="star-count">★ 6</span>
+        </div>
+      </a>
+      <a class="repo-card" href="#" style="animation-delay:0.2s">
+        <div class="repo-card-header">
+          <span class="repo-icon">📦</span>
+          <div>
+            <div class="repo-card-name">revanity-go</div>
+          </div>
+          <span class="public-tag" style="margin-left:auto">Public</span>
+        </div>
+        <div class="repo-card-desc">Go implementation of Revanity, a Reticulum/LXMF vanity address generator.</div>
+        <div class="repo-card-meta">
+          <span><span class="lang-dot lang-go"></span>Go</span>
+          <span class="star-count">★ 1</span>
+        </div>
+      </a>
+      <a class="repo-card" href="#" style="animation-delay:0.25s">
+        <div class="repo-card-header">
+          <span class="repo-icon">📦</span>
+          <div>
+            <div class="repo-card-name">rethex-site</div>
+          </div>
+          <span class="public-tag" style="margin-left:auto">Public</span>
+        </div>
+        <div class="repo-card-desc">RETHEX + Reticulum visual explainer page</div>
+        <div class="repo-card-meta">
+          <span><span class="lang-dot lang-html"></span>HTML</span>
+          <span class="fork-count">⑂ 1</span>
+        </div>
+      </a>
+      <a class="repo-card" href="#" style="animation-delay:0.3s">
+        <div class="repo-card-header">
+          <span class="repo-icon">📦</span>
+          <div>
+            <div class="repo-card-name">lrgp-rs</div>
+          </div>
+          <span class="public-tag" style="margin-left:auto">Public</span>
+        </div>
+        <div class="repo-card-desc">Lightweight Reticulum Gaming Protocol — LXMF/Reticulum mesh networks (Rust)</div>
+        <div class="repo-card-meta">
+          <span><span class="lang-dot lang-rust"></span>Rust</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- REPO LIST -->
+    <div class="section-header">
+      <span class="section-title" style="margin:0">Repositories</span>
+    </div>
+
+    <div class="repo-list">
+      <div class="repo-list-item">
+        <div class="repo-list-main">
+          <div class="repo-list-name">
+            <a href="#">rethex</a>
+            <span class="public-tag">Public</span>
+          </div>
+          <div class="repo-list-desc">Standalone Reticulum on LilyGo T-Deck, all-in-one.</div>
+          <div class="repo-list-meta">
+            <span><span class="lang-dot lang-cpp"></span>C++</span>
+            <span>★ 33</span>
+            <span>⑂ 4</span>
+            <span class="updated-at">Updated Mar 15, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="repo-list-item">
+        <div class="repo-list-main">
+          <div class="repo-list-name">
+            <a href="#">retcom</a>
+            <span class="public-tag">Public</span>
+          </div>
+          <div class="repo-list-desc">Standalone Reticulum on M5Stack's Cardputer Adv.</div>
+          <div class="repo-list-meta">
+            <span><span class="lang-dot lang-cpp"></span>C++</span>
+            <span>★ 9</span>
+            <span class="updated-at">Updated Mar 15, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="repo-list-item">
+        <div class="repo-list-main">
+          <div class="repo-list-name">
+            <a href="#">lrgp-py</a>
+            <span class="public-tag">Public</span>
+          </div>
+          <div class="repo-list-desc">Lightweight Reticulum Gaming Protocol — multiplayer games over LXMF/Reticulum mesh networks (Python)</div>
+          <div class="repo-list-meta">
+            <span><span class="lang-dot lang-python"></span>Python</span>
+            <span>★ 6</span>
+            <span style="font-size:10px; color:var(--muted2)">AGPL-3.0</span>
+            <span class="updated-at">Updated Mar 13, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="repo-list-item">
+        <div class="repo-list-main">
+          <div class="repo-list-name">
+            <a href="#">lrgp-rs</a>
+            <span class="public-tag">Public</span>
+          </div>
+          <div class="repo-list-desc">Lightweight Reticulum Gaming Protocol — multiplayer games over LXMF/Reticulum mesh networks (Rust)</div>
+          <div class="repo-list-meta">
+            <span><span class="lang-dot lang-rust"></span>Rust</span>
+            <span style="font-size:10px; color:var(--muted2)">MIT</span>
+            <span class="updated-at">Updated Mar 13, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="repo-list-item">
+        <div class="repo-list-main">
+          <div class="repo-list-name">
+            <a href="#">revanity-go</a>
+            <span class="public-tag">Public</span>
+          </div>
+          <div class="repo-list-desc">Go implementation of Revanity, a Reticulum/LXMF vanity address generator.</div>
+          <div class="repo-list-meta">
+            <span><span class="lang-dot lang-go"></span>Go</span>
+            <span>★ 1</span>
+            <span style="font-size:10px; color:var(--muted2)">AGPL-3.0</span>
+            <span class="updated-at">Updated Mar 8, 2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
